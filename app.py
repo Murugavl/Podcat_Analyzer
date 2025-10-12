@@ -26,7 +26,7 @@ uploaded_file = st.sidebar.file_uploader(
 )
 
 # Main Page Header
-st.title("🌍 Multi-Language Podcast Summarizer & Emotion Tracker")
+st.title("🎧 Podcast Summarizer & Emotion Tracker")
 st.markdown("""
 This AI-powered application performs:
 - 🔊 **Speech-to-Text Transcription** (using OpenAI Whisper)
