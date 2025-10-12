@@ -15,7 +15,7 @@ except Exception as e:
     st.exception(e)
     raise
 
-st.set_page_config(page_title="🎧 Multi-Language Podcast Summarizer", layout="wide")
+st.set_page_config(page_title="🎧 Podcast Summarizer", layout="wide")
 
 # Sidebar setup
 st.sidebar.title("🎙️ Podcast Analyzer Controls")
