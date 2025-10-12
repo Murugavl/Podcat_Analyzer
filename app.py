@@ -177,7 +177,7 @@ def main():
             f.write(transcript)
         with open("summary.txt", "w", encoding="utf-8") as f:
             f.write(summary_translated)
-        st.success("✅ All processing complete! Files saved as `transcript.txt` and `summary.txt`.")
+        st.success("✅ All processing complete!")
     except Exception as e:
         st.warning("Saving outputs failed.")
         st.exception(e)
