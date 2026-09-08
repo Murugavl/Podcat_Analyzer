@@ -1,82 +1,65 @@
-# 🎧 Multi-Language Podcast Analyzer & Summarizer
+# Echoscribe
 
-A **Streamlit-based AI-powered application** to analyze podcasts and audio files.  
-This tool can **transcribe**, **summarize**, **translate**, **analyze sentiment**, and **detect emotions** in multiple languages.
+Echoscribe turns a podcast or any spoken-audio file into something you can read:
+a full transcript, an English summary (and a summary in the original language if
+it wasn't English), and a sentiment/emotion breakdown across the recording.
 
----
+It's a small full-stack app — a FastAPI backend that runs the models and a React
+frontend that drives the uploads and shows the results.
 
-## 🌟 Features
+## What it does
 
-- **Audio Transcription** using **OpenAI Whisper**
-- **Multi-Language Support** with automatic translation to/from English
-- **Summarization** of long podcasts
-- **Sentiment Analysis** (positive, negative, neutral)
-- **Emotion Detection** (joy, sadness, anger, fear, etc.)
-- **Interactive Dashboard** with visual charts using **Plotly**
-- Supports common audio formats: `mp3`, `wav`, `m4a`, `flac`
+| Step | Model |
+|------|-------|
+| Speech-to-text + language detection | OpenAI Whisper (`base`) |
+| Translation to / from English | Helsinki-NLP OPUS-MT |
+| Summarization | `facebook/bart-large-cnn` |
+| Sentiment | default HF `sentiment-analysis` pipeline |
+| Emotion (per chunk) | `j-hartmann/emotion-english-distilroberta-base` |
 
----
+Uploads are processed by a background worker; the frontend polls job status and
+loads the result when it's ready. Past jobs are stored in SQLite and browsable
+from the History panel.
 
-## 🛠️ Technologies Used
+## Project layout
 
-- **Python 3.12+**
-- [Streamlit](https://streamlit.io/) – Web app framework
-- [Whisper](https://github.com/openai/whisper) – Speech-to-text transcription
-- [Transformers](https://huggingface.co/transformers/) – NLP for summarization, translation, sentiment, and emotion
-- [Plotly](https://plotly.com/python/) – Interactive visualizations
-- [Pandas](https://pandas.pydata.org/) – Data processing
-
----
-
-## ⚡ Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/podcast-analyzer.git
-cd podcast-analyzer
 ```
-2. Create a virtual environment and activate it
-```bash
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# macOS/Linux
-source .venv/bin/activate
+backend/     FastAPI app, background worker, model cache, SQLite store
+frontend/    React 19 + Vite + Tailwind UI
+legacy/      the original Streamlit prototype (kept for reference)
 ```
 
-3. Install dependencies:
+## Running it locally
+
+With Docker:
+
 ```bash
-pip install -r requirements.txt
+docker compose up --build
 ```
 
-4. Run the Streamlit app:
+- Frontend: http://localhost:5173
+- API + Swagger docs: http://localhost:8000/docs
+
+The first start downloads the model weights from Hugging Face, which can take a
+few minutes. After that they're cached.
+
+Without Docker, run the two halves separately:
+
 ```bash
-streamlit run app.py
+# backend
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --reload
+
+# frontend
+cd frontend && npm install && npm run dev
 ```
-## 🖥️ Usage
 
- 1. Open the app in your browser (Streamlit will provide the local URL).
+`ffmpeg` needs to be on your PATH for Whisper to read audio.
 
- 2. Upload your podcast/audio file from the sidebar.
+## Deployment
 
- 3. View the transcript, summary, sentiment, and emotion analysis on the main page.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for Railway (backend) and Vercel (frontend).
 
- 4. Download transcript.txt and summary.txt automatically saved in the project folder.
+## Credits
 
-## 📁 File Structure
-    podcast-analyzer/
-    ├─ .gitignore
-    ├─ README.md
-    ├─ requirements.txt
-    ├─ app.py
-    ├─ audio/               # Uploaded audio files
-    ├─ transcript.txt       # Generated transcript
-    ├─ summary.txt          # Generated summary
-
-## ⚠️ Notes
-
-* Large audio files may take longer to process.
-
-* Emotion detection and summarization use chunking to handle long transcripts.
-
-* Make sure ffmpeg is installed for Whisper to process audio correctly.
+Designed & developed by Murugavel V. Licensed under the terms in [LICENSE](LICENSE).

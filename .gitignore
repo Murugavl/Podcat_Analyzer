@@ -1,56 +1,29 @@
-# Python
+# Python/Backend ignores
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-*.so
-
-# Virtual environment
+*$py.class
 .venv/
-env/
-venv/
-ENV/
-
-# Streamlit cache
-.streamlit/
-.streamlit/secrets.toml
-
-# Audio and media files
+.env
 audio/
-uploads/
+backend/database/
+backend/logs/
+backend/audio/
+*.log
+*.db
 *.mp3
 *.wav
-*.m4a
+*.txt
 
-# Temporary files
-*.log
-*.tmp
-*.bak
-
-# Jupyter and VSCode
-.ipynb_checkpoints/
-.vscode/
-*.code-workspace
-
-# OS-specific
-.DS_Store
-Thumbs.db
-
-# PyCharm
-.idea/
-
-# Build and dist
-build/
+# Node/Frontend ignores
+node_modules/
 dist/
-*.egg-info/
+.DS_Store
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Environment files
-.env
-*.env
-
-# __pycache__ folders anywhere
-**/__pycache__/
-
-# Dataset folders (optional if you have local datasets)
-dataset/
-data/
+# IDE/System ignores
+.gemini/
+.idea/
+.vscode/
