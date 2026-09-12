@@ -36,16 +36,16 @@ export function Toast({ toast, onClose }: ToastProps) {
     >
       <div className="flex-shrink-0 mt-0.5">{icons[toast.type]}</div>
       <div className="flex-grow min-w-0">
-        <h4 className="text-sm font-semibold text-white">{toast.title}</h4>
+        <h4 className="text-sm font-semibold text-ink">{toast.title}</h4>
         {toast.message && (
-          <p className="mt-1 text-xs text-zinc-400 leading-relaxed break-words">
+          <p className="mt-1 text-xs text-ink-soft leading-relaxed break-words">
             {toast.message}
           </p>
         )}
       </div>
       <button
         onClick={() => onClose(toast.id)}
-        className="flex-shrink-0 self-start text-zinc-400 hover:text-white transition-colors"
+        className="flex-shrink-0 self-start text-ink-soft hover:text-ink transition-colors"
       >
         <X className="h-4 w-4" />
       </button>

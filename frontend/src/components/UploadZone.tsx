@@ -73,7 +73,7 @@ export function UploadZone({ file, setFile, onAnalyze, isLoading }: UploadZonePr
         onClick={triggerFileInput}
         className={cn(
           "w-full h-80 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 p-6 relative select-none",
-          isDragActive ? "border-indigo-500 drag-active bg-indigo-500/5" : "border-white/10 hover:border-indigo-500/50 bg-white/5",
+          isDragActive ? "border-indigo-500 drag-active bg-indigo-500/5" : "border-hairline/15 hover:border-indigo-500/50 bg-hairline/10",
           isLoading && "opacity-50 cursor-not-allowed pointer-events-none"
         )}
       >
@@ -92,8 +92,8 @@ export function UploadZone({ file, setFile, onAnalyze, isLoading }: UploadZonePr
               <FileAudio className="h-10 w-10 animate-pulse" />
             </div>
             <div className="max-w-md">
-              <p className="text-base font-semibold truncate px-2 text-white max-w-[280px] sm:max-w-sm">{file.name}</p>
-              <p className="text-xs text-zinc-400 mt-1">{formatBytes(file.size)}</p>
+              <p className="text-base font-semibold truncate px-2 text-ink max-w-[280px] sm:max-w-sm">{file.name}</p>
+              <p className="text-xs text-ink-soft mt-1">{formatBytes(file.size)}</p>
             </div>
             {isOverSizeLimit && (
               <div className="flex items-center gap-2 text-amber-400 bg-amber-400/10 px-3 py-1.5 rounded-xl border border-amber-400/20 text-xs mt-2">
@@ -104,14 +104,14 @@ export function UploadZone({ file, setFile, onAnalyze, isLoading }: UploadZonePr
           </div>
         ) : (
           <div className="flex flex-col items-center text-center gap-3">
-            <div className="p-4 rounded-full bg-white/5 text-zinc-400 border border-white/5">
+            <div className="p-4 rounded-full bg-hairline/10 text-ink-soft border border-hairline/10">
               <Upload className="h-10 w-10" />
             </div>
             <div>
-              <p className="text-base font-semibold text-white">Drag & drop your audio file</p>
-              <p className="text-xs text-zinc-400 mt-1">or click to browse from your computer</p>
+              <p className="text-base font-semibold text-ink">Drag & drop your audio file</p>
+              <p className="text-xs text-ink-soft mt-1">or click to browse from your computer</p>
             </div>
-            <p className="text-[10px] text-zinc-500 mt-4 uppercase tracking-wider font-semibold">
+            <p className="text-[10px] text-ink-faint mt-4 uppercase tracking-wider font-semibold">
               Supported formats: MP3, WAV, M4A, FLAC (Max 100MB)
             </p>
           </div>
@@ -125,7 +125,7 @@ export function UploadZone({ file, setFile, onAnalyze, isLoading }: UploadZonePr
           "w-full py-3.5 rounded-2xl font-bold text-sm transition-all shadow-lg hover:shadow-indigo-500/20 active:scale-[0.99] select-none",
           file && !isLoading
             ? "bg-indigo-500 hover:bg-indigo-600 text-white cursor-pointer"
-            : "bg-zinc-900 text-zinc-500 cursor-not-allowed border border-white/5"
+            : "bg-inset text-ink-faint cursor-not-allowed border border-hairline/10"
         )}
       >
         {isLoading ? "Analyzing…" : "Analyze"}

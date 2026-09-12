@@ -49,6 +49,32 @@ export function formatLanguage(code: string): string {
   return LANGUAGE_MAP[clean] || clean.toUpperCase();
 }
 
+/**
+ * Break a long run-on string into readable paragraphs. Honours explicit
+ * blank-line breaks if the text already has them; otherwise groups a fixed
+ * number of sentences together.
+ */
+export function toParagraphs(text: string, sentencesPerParagraph = 4): string[] {
+  const trimmed = (text || '').trim();
+  if (!trimmed) return [];
+
+  const explicit = trimmed
+    .split(/\n{2,}/)
+    .map((p) => p.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+  if (explicit.length > 1) return explicit;
+
+  const flat = trimmed.replace(/\s+/g, ' ');
+  const sentences = flat.match(/[^.!?]+(?:[.!?]+["'”’)\]]*|$)/g);
+  if (!sentences || sentences.length <= sentencesPerParagraph) return [flat];
+
+  const paragraphs: string[] = [];
+  for (let i = 0; i < sentences.length; i += sentencesPerParagraph) {
+    paragraphs.push(sentences.slice(i, i + sentencesPerParagraph).join(' ').trim());
+  }
+  return paragraphs;
+}
+
 export function formatPercent(num: number): string {
   // If backend returns score directly between 0 and 1, multiply by 100.
   // In app.py, they had `round(sentiment_result['score'] * 100, 2)`.
