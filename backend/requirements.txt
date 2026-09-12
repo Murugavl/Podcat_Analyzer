@@ -1,0 +1,21 @@
+fastapi==0.111.0
+uvicorn==0.30.0
+python-multipart==0.0.9
+pydantic==2.7.0
+pydantic-settings==2.2.1
+# torch 2.3.0 is built against the NumPy 1.x ABI; NumPy 2.x breaks it
+# ("Failed to initialize NumPy: _ARRAY_API not found").
+numpy<2
+openai-whisper==20231117
+transformers==4.41.0
+# Helsinki-NLP/opus-mt-* translation models use a SentencePiece (Marian)
+# tokenizer; sacremoses silences a tokenisation warning.
+sentencepiece
+sacremoses
+torch==2.3.0
+pandas==2.2.2
+plotly==5.22.0
+setuptools-rust
+# Offline text-to-speech for the "download audio summary" feature.
+pyttsx3
+pywin32; platform_system == "Windows"

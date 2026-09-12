@@ -1,0 +1,8 @@
+# Build-time constraint only (see Dockerfile PIP_CONSTRAINT).
+#
+# openai-whisper==20231117 ships an old-style setup.py that does
+# `import pkg_resources` at build time. setuptools>=81 dropped
+# pkg_resources, so pip's isolated build env for that sdist fails with
+# "ModuleNotFoundError: No module named 'pkg_resources'" unless we pin
+# setuptools below that for the duration of the build.
+setuptools<81

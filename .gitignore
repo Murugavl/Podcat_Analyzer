@@ -5,14 +5,16 @@ __pycache__/
 .venv/
 .env
 audio/
-backend/database/
-backend/logs/
-backend/audio/
+logs/
 *.log
 *.db
 *.mp3
 *.wav
 *.txt
+# ...except the backend's own dependency/build files, which *.txt above
+# would otherwise silently exclude from every commit.
+!backend/requirements.txt
+!backend/constraints.txt
 
 # Node/Frontend ignores
 node_modules/

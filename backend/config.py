@@ -7,11 +7,16 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = Field(default=100)
     AUDIO_TEMP_DIR: str = Field(default="audio")
     LOG_FILE: str = Field(default="logs/podcast_analyzer.log")
-    DB_PATH: str = Field(default="database/podcast_history.db")
+    # Comma-separated list of origins allowed to call the API with cookies.
+    ALLOWED_ORIGINS: str = Field(default="http://localhost:5173")
 
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore"
     )
+
+    @property
+    def allowed_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",") if origin.strip()]
 
 settings = Settings()

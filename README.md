@@ -18,13 +18,19 @@ frontend that drives the uploads and shows the results.
 | Emotion (per chunk) | `j-hartmann/emotion-english-distilroberta-base` |
 
 Uploads are processed by a background worker; the frontend polls job status and
-loads the result when it's ready. Past jobs are stored in SQLite and browsable
-from the History panel.
+loads the result when it's ready. There's no database — each browser gets an
+anonymous session cookie, and the backend keeps that session's jobs in memory
+for the History panel. History resets whenever the backend restarts, and one
+browser never sees another's jobs.
+
+You can also download a short **audio summary**: the backend narrates the
+summary text with the OS's offline text-to-speech engine and hands back a WAV
+file — a "listen to it in 30 seconds" version of the podcast.
 
 ## Project layout
 
 ```
-backend/     FastAPI app, background worker, model cache, SQLite store
+backend/     FastAPI app, background worker, model cache, in-memory session store
 frontend/    React 19 + Vite + Tailwind UI
 legacy/      the original Streamlit prototype (kept for reference)
 ```
@@ -54,11 +60,13 @@ uvicorn backend.main:app --reload
 cd frontend && npm install && npm run dev
 ```
 
-`ffmpeg` needs to be on your PATH for Whisper to read audio.
+`ffmpeg` needs to be on your PATH for Whisper to read audio. On Linux, the
+audio-summary feature also needs `espeak` installed (the Docker image
+already includes it); on Windows and macOS the built-in TTS voice is used
+automatically.
 
-## Deployment
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for Railway (backend) and Vercel (frontend).
+Copy `.env.example` to `.env` before running `docker compose up` — Compose
+refuses to start without it.
 
 ## Credits
 
