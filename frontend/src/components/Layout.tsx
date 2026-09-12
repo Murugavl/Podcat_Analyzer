@@ -1,6 +1,8 @@
 import React from 'react';
-import { History } from 'lucide-react';
+import { History, Moon, Sun } from 'lucide-react';
 import { Logo } from './Logo';
+import { Footer } from './Footer';
+import { useTheme } from '../hooks/useTheme';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,27 +10,44 @@ interface LayoutProps {
 }
 
 export function Layout({ children, onHistoryClick }: LayoutProps) {
+  const { theme, toggleTheme } = useTheme();
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+    <div className="min-h-screen bg-canvas text-ink flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-30 w-full glass-card border-b border-white/5 backdrop-blur-md">
+      <header className="sticky top-0 z-30 w-full glass-card border-b border-hairline/10 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
               <Logo className="h-5 w-5" />
             </div>
-            <span className="font-semibold text-lg tracking-tight text-white">
+            <span className="font-semibold text-lg tracking-tight text-ink">
               Echoscribe
             </span>
           </div>
 
-          <button
-            onClick={onHistoryClick}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium transition-colors"
-          >
-            <History className="h-4 w-4 text-zinc-400" />
-            <span>History</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onHistoryClick}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-hairline/10 hover:bg-hairline/15 border border-hairline/15 text-sm font-medium transition-colors"
+            >
+              <History className="h-4 w-4 text-ink-soft" />
+              <span>History</span>
+            </button>
+
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-hairline/10 hover:bg-hairline/15 border border-hairline/15 text-ink-soft hover:text-ink transition-colors"
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -37,10 +56,7 @@ export function Layout({ children, onHistoryClick }: LayoutProps) {
         {children}
       </main>
 
-      {/* Footer */}
-      <footer className="py-6 border-t border-white/5 text-center text-xs text-zinc-500">
-        <p>© 2026 Echoscribe · Designed &amp; developed by Murugavel V</p>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -57,7 +57,7 @@ export function HistoryPanel({ isOpen, onClose, onSelectJob }: HistoryPanelProps
       case 'complete': return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
       case 'failed': return 'bg-rose-500/10 border-rose-500/20 text-rose-400';
       case 'processing': return 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 animate-pulse';
-      default: return 'bg-zinc-800 border-zinc-700 text-zinc-400';
+      default: return 'bg-hairline/10 border-hairline/20 text-ink-soft';
     }
   };
 
@@ -71,7 +71,7 @@ export function HistoryPanel({ isOpen, onClose, onSelectJob }: HistoryPanelProps
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-overlay/50 backdrop-blur-sm"
           />
 
           {/* Panel */}
@@ -80,17 +80,17 @@ export function HistoryPanel({ isOpen, onClose, onSelectJob }: HistoryPanelProps
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-zinc-950 border-l border-white/5 shadow-2xl flex flex-col"
+            className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-canvas border-l border-hairline/10 shadow-2xl flex flex-col"
           >
             {/* Header */}
-            <div className="p-6 border-b border-white/5 flex items-center justify-between">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
+            <div className="p-6 border-b border-hairline/10 flex items-center justify-between">
+              <h2 className="text-base font-bold text-ink flex items-center gap-2">
                 <Mic className="h-4 w-4 text-indigo-400" />
                 <span>Podcast Analysis History</span>
               </h2>
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
+                className="p-1 rounded-lg hover:bg-hairline/10 text-ink-soft hover:text-ink transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -101,7 +101,7 @@ export function HistoryPanel({ isOpen, onClose, onSelectJob }: HistoryPanelProps
               {isLoading ? (
                 // Skeletons
                 Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="glass-card border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
+                  <div key={i} className="glass-card border border-hairline/10 rounded-2xl p-4 flex flex-col gap-3">
                     <div className="flex justify-between">
                       <Skeleton className="h-4 w-2/3" />
                       <Skeleton className="h-4 w-12" />
@@ -116,19 +116,19 @@ export function HistoryPanel({ isOpen, onClose, onSelectJob }: HistoryPanelProps
                   <p className="text-sm font-semibold">{error}</p>
                   <button
                     onClick={fetchJobs}
-                    className="mt-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-semibold text-white hover:bg-white/10"
+                    className="mt-2 px-4 py-2 rounded-xl bg-hairline/10 border border-hairline/15 text-xs font-semibold text-ink hover:bg-hairline/15"
                   >
                     Retry
                   </button>
                 </div>
               ) : jobs.length === 0 ? (
                 // Empty state
-                <div className="flex flex-col items-center justify-center text-center gap-4 py-20 text-zinc-500">
-                  <div className="p-4 rounded-full bg-white/5 border border-white/5">
+                <div className="flex flex-col items-center justify-center text-center gap-4 py-20 text-ink-faint">
+                  <div className="p-4 rounded-full bg-hairline/10 border border-hairline/10">
                     <Mic className="h-8 w-8" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">No past analyses yet</h3>
+                    <h3 className="font-semibold text-ink">No past analyses yet</h3>
                     <p className="text-xs mt-1 max-w-[200px]">Upload your first podcast to begin building history.</p>
                   </div>
                 </div>
@@ -146,12 +146,12 @@ export function HistoryPanel({ isOpen, onClose, onSelectJob }: HistoryPanelProps
                       }
                     }}
                     className={cn(
-                      "glass-card border border-white/5 rounded-2xl p-4 flex flex-col gap-3 transition-all cursor-pointer group hover:border-indigo-500/40 hover:bg-white/10",
+                      "glass-card border border-hairline/10 rounded-2xl p-4 flex flex-col gap-3 transition-all cursor-pointer group hover:border-indigo-500/40 hover:bg-hairline/15",
                       job.status !== 'complete' && "cursor-not-allowed opacity-75"
                     )}
                   >
                     <div className="flex justify-between items-start gap-4">
-                      <h4 className="text-xs font-bold text-white truncate max-w-[180px] group-hover:text-indigo-400 transition-colors">
+                      <h4 className="text-xs font-bold text-ink truncate max-w-[180px] group-hover:text-indigo-400 transition-colors">
                         {job.filename}
                       </h4>
                       <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider", getStatusColor(job.status))}>
@@ -159,13 +159,13 @@ export function HistoryPanel({ isOpen, onClose, onSelectJob }: HistoryPanelProps
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                    <div className="flex items-center gap-1.5 text-[10px] text-ink-faint">
                       <Calendar className="h-3 w-3" />
                       <span>{formatRelativeTime(job.created_at)}</span>
                     </div>
 
                     {job.summary_en && (
-                      <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed bg-zinc-900/40 p-2.5 rounded-xl border border-white/5">
+                      <p className="text-[11px] text-ink-soft line-clamp-2 leading-relaxed bg-inset/50 p-2.5 rounded-xl border border-hairline/10">
                         {job.summary_en.length > 100 ? `${job.summary_en.substring(0, 100)}...` : job.summary_en}
                       </p>
                     )}
