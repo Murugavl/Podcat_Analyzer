@@ -16,20 +16,24 @@ export function ProgressSteps({ currentStep }: ProgressStepsProps) {
   ];
 
   return (
-    <div className="glass-card border border-white/5 rounded-2xl p-6 w-full flex flex-col gap-6">
+    <div className="glass-card border border-hairline/10 rounded-2xl p-6 w-full flex flex-col gap-6">
       <div>
-        <h3 className="text-base font-bold text-white">Processing</h3>
-        <p className="text-xs text-zinc-400 mt-1">This usually takes a minute or two, depending on the file.</p>
+        <h3 className="text-base font-bold text-ink">Processing</h3>
+        <p className="text-xs text-ink-soft mt-1">This usually takes a minute or two, depending on the file.</p>
       </div>
 
-      <div className="relative flex flex-col gap-6 pl-2">
-        {/* Progress Line */}
-        <div className="absolute left-[15px] top-3 bottom-3 w-0.5 bg-zinc-800" />
-        <div 
-          className="absolute left-[15px] top-3 w-0.5 bg-indigo-500 transition-all duration-500" 
-          style={{ 
-            height: `${Math.min((currentStep / (steps.length - 1)) * 100, 100)}%`, 
-            maxHeight: 'calc(100% - 24px)' 
+      <div className="relative flex flex-col gap-6">
+        {/* Connector track + fill. The dots are 2rem wide, so their centres
+            sit at x = 1rem; top-4 / bottom-4 clamp the line to the first and
+            last dot centres. */}
+        <div className="absolute left-4 top-4 bottom-4 w-px -translate-x-1/2 bg-hairline/15" />
+        <div
+          className="absolute left-4 top-4 w-px -translate-x-1/2 bg-indigo-500 transition-all duration-500"
+          style={{
+            height: `calc((100% - 2rem) * ${Math.min(
+              Math.max(currentStep / (steps.length - 1), 0),
+              1
+            )})`,
           }}
         />
 
@@ -52,7 +56,7 @@ export function ProgressSteps({ currentStep }: ProgressStepsProps) {
                   "h-8 w-8 rounded-full flex items-center justify-center border text-xs transition-all duration-300 font-semibold flex-shrink-0",
                   isCompleted && "bg-emerald-500 border-emerald-500 text-white",
                   isCurrent && "bg-indigo-500/10 border-indigo-500 text-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.2)]",
-                  isUpcoming && "bg-zinc-900 border-zinc-800 text-zinc-500"
+                  isUpcoming && "bg-inset border-hairline/10 text-ink-faint"
                 )}
               >
                 {isCompleted ? (
@@ -69,7 +73,7 @@ export function ProgressSteps({ currentStep }: ProgressStepsProps) {
                 <span
                   className={cn(
                     "text-sm font-medium",
-                    isCurrent ? "text-indigo-400 font-semibold" : "text-zinc-200"
+                    isCurrent ? "text-indigo-400 font-semibold" : "text-ink-soft"
                   )}
                 >
                   {step.label}
