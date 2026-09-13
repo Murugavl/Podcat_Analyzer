@@ -1,3 +1,14 @@
+---
+title: Echoscribe
+emoji: 🎙️
+colorFrom: blue
+colorTo: purple
+sdk: gradio
+sdk_version: 4.44.1
+app_file: app.py
+pinned: false
+---
+
 # Echoscribe
 
 Echoscribe turns a podcast or any spoken-audio file into something you can read:
@@ -68,68 +79,72 @@ automatically.
 Copy `.env.example` to `.env` before running `docker compose up` — Compose
 refuses to start without it.
 
-## Deploying (backend on Render, frontend on Vercel)
+## Deploying (backend on Hugging Face Spaces, frontend on Vercel)
 
-### Backend — Render
+This app loads Whisper, a summarizer, two translation models, and
+sentiment/emotion pipelines into memory at startup — comfortably under 2GB
+combined. That ruled out free-tier Render (512MB, OOM-crashes even after
+aggressive memory tuning) and paid Render wasn't an option, so the backend
+runs on **Hugging Face Spaces** instead: its free CPU tier gives 16GB RAM,
+no credit card required, and it already hosts every model this app
+downloads.
 
-You can create the service either from [`render.yaml`](render.yaml) (**New →
-Blueprint**, config applied automatically) or manually (**New → Web
-Service**). Either way, these settings matter:
+Docker Spaces specifically require a paid HF PRO subscription, so this
+runs on the free **Gradio SDK** instead: [`app.py`](app.py) mounts the
+existing FastAPI backend (`backend/main.py` — all its `/api/*` routes,
+unchanged) underneath a one-page Gradio UI, which is there only to satisfy
+the SDK's expectations. [`requirements.txt`](requirements.txt),
+[`packages.txt`](packages.txt) (apt packages: `ffmpeg`, `espeak`,
+`libespeak1`), and [`runtime.txt`](runtime.txt) at the repo root are what
+Spaces' non-Docker build reads — separate from `backend/requirements.txt`
+and the `Dockerfile`, which still exist for local Docker Compose use.
 
-| Setting | Value |
-|---|---|
-| Runtime | Docker |
-| Dockerfile Path | `Dockerfile` (repo root — Render's default, nothing to change) |
-| Docker Build Context Directory | `.` (repo root — Render's default) |
-| Health Check Path | `/health` |
+### Backend — Hugging Face Spaces
 
-The Dockerfile lives at the repo root specifically so these can stay at
-Render's defaults — no custom path to get wrong.
-
-Environment variables — see [`render.yaml`](render.yaml) for the full list
-(`WHISPER_MODEL_SIZE`, `MAX_UPLOAD_SIZE_MB`, `ALLOWED_ORIGINS`,
-`COOKIE_SAMESITE=none`, `COOKIE_SECURE=true`). `COOKIE_SAMESITE`/`COOKIE_SECURE`
-are required as-is because the frontend and backend live on different
-domains, so the session cookie only survives as a cross-site cookie.
-
-**Plan sizing.** This app loads Whisper, a summarizer, two translation
-models, and sentiment/emotion pipelines into memory at startup — comfortably
-under 2GB combined, but well past what Render's free/starter 512MB tier can
-hold (confirmed in practice: it OOM-crashes mid-job on that tier even after
-aggressive lazy-loading and per-step memory tricks). Use at least the
-**Standard** plan (2GB RAM). The blueprint also provisions a persistent disk
-mounted at `/root/.cache` so model weights (several GB, pulled from Hugging
-Face on first boot) are cached across deploys instead of re-downloaded every
-time — Free/Starter don't support persistent disks at all.
-
-First boot downloads all the model weights — expect several minutes before
-`/health` goes green.
-
-Once deployed, note your service URL (e.g.
-`https://echoscribe-backend.onrender.com`).
+1. Create a Space at [huggingface.co/new-space](https://huggingface.co/new-space):
+   pick the **Gradio** SDK, Free CPU Basic hardware.
+2. Push this repo to the Space's own git remote (shown on the Space's page
+   after creation, e.g. `git remote add space https://huggingface.co/spaces/<user>/<space-name>`,
+   then `git push space main`). The root [`README.md`](README.md) already
+   carries the YAML frontmatter (`sdk: gradio`, `app_file: app.py`) Spaces
+   needs to recognize and run [`app.py`](app.py) — no separate config file
+   required.
+3. In the Space's **Settings → Variables and secrets**, add the same
+   variables Render would have needed: `WHISPER_MODEL_SIZE=base`,
+   `MAX_UPLOAD_SIZE_MB=100`, `LOG_FILE=logs/podcast_analyzer.log`,
+   `ALLOWED_ORIGINS=<your Vercel URL>`, `COOKIE_SAMESITE=none`,
+   `COOKIE_SECURE=true`. `COOKIE_SAMESITE`/`COOKIE_SECURE` are required as-is
+   because the frontend and backend live on different domains, so the
+   session cookie only survives as a cross-site cookie.
+4. First boot downloads all the model weights — expect several minutes
+   before the Space status goes green. A Space that's gone idle re-downloads
+   them on wake, since the free tier has no persistent disk (same tradeoff
+   Render's free tier had, but with far more RAM to work with while it
+   runs).
+5. Note the Space's public URL, e.g. `https://<user>-<space-name>.hf.space`.
 
 ### Frontend — Vercel
 
 1. Import the repo into Vercel with **Root Directory** set to `frontend`
    (Vite framework preset is auto-detected via `vercel.json`).
-2. Set the project env var `VITE_API_URL` to the Render URL from step 6
+2. Set the project env var `VITE_API_URL` to the Space URL from step 5
    above, with no trailing slash. The frontend calls this URL directly for
    every API request (uploads can be tens of MB, well past what a
    same-origin rewrite/proxy through Vercel's edge network reliably
    forwards) rather than going through a rewrite.
-3. Deploy. Update `ALLOWED_ORIGINS` on Render if the final Vercel URL
-   differs from what you set in step 4 above (custom domain, preview URLs,
-   etc.) and redeploy the backend.
+3. Deploy. Update `ALLOWED_ORIGINS` on the Space if the final Vercel URL
+   differs from what you set in step 3 above (custom domain, preview URLs,
+   etc.) — no redeploy needed, Spaces variable changes restart the container.
 
 ### Known tradeoffs to expect in production
 
 - **No database**: job history lives in memory per backend process. A
-  Render restart or redeploy clears everyone's history. Don't run more than
-  one backend instance/replica — a second instance would maintain its own,
-  inconsistent history.
-- **Cold start on redeploy**: models are preloaded at startup for fast first
-  requests, but that preload itself takes a little while after each deploy —
-  `/health` won't go green until it finishes.
+  Space restart (redeploy, or waking from idle) clears everyone's history.
+  Don't run more than one backend instance/replica — a second instance
+  would maintain its own, inconsistent history.
+- **Cold start on redeploy/wake**: models are preloaded at startup for fast
+  first requests, but that preload itself takes a little while — the Space
+  won't accept requests until it finishes.
 
 ## Credits
 

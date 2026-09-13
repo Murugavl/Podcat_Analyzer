@@ -1,0 +1,13 @@
+# Hugging Face Spaces (Gradio SDK) reads this file at the repo root to
+# install Python dependencies — see app.py for why this file exists
+# instead of just backend/requirements.txt.
+#
+# setuptools must resolve before openai-whisper: its old-style sdist does
+# `import pkg_resources` in setup.py, which setuptools>=81 removed.
+setuptools<81
+-r backend/requirements.txt
+# Pinned explicitly (not left to the Space's default) because newer gradio
+# releases pull huggingface-hub>=1.0, which conflicts with transformers'
+# own huggingface-hub<1.0 requirement above. 4.44.1 resolves cleanly to
+# huggingface-hub 0.36.2, satisfying both.
+gradio==4.44.1

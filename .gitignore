@@ -15,6 +15,11 @@ logs/
 # would otherwise silently exclude from every commit.
 !backend/requirements.txt
 !backend/constraints.txt
+# ...and the root-level files Hugging Face Spaces' Gradio SDK build reads
+# (requirements.txt, packages.txt, runtime.txt) — see app.py.
+!/requirements.txt
+!/packages.txt
+!/runtime.txt
 
 # Node/Frontend ignores
 node_modules/
