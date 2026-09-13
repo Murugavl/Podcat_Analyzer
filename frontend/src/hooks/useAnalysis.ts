@@ -70,18 +70,25 @@ export function useAnalysis() {
       const enqueueData = await analyzeAudio(file);
       const jobId = enqueueData.job_id;
 
-      // 2. Start polling status every 3 seconds
+      // 2. Start polling status every 3 seconds. A handful of consecutive
+      // failures (backend restarted mid-job, network blip, etc.) stops
+      // polling and surfaces an error instead of retrying forever — this
+      // used to retry silently and indefinitely on every failure.
+      let consecutiveFailures = 0;
+      const MAX_CONSECUTIVE_FAILURES = 5;
+
       pollingIntervalRef.current = window.setInterval(async () => {
         try {
           const statusData = await getJobStatus(jobId);
-          
+          consecutiveFailures = 0;
+
           if (statusData.status === 'complete') {
             // 4. Job complete, retrieve full result
             if (pollingIntervalRef.current) {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
             }
-            
+
             const fullResult = await getJob(jobId);
             setResult(fullResult);
             setIsLoading(false);
@@ -92,7 +99,7 @@ export function useAnalysis() {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
             }
-            
+
             const errMsg = statusData.error || 'Job processing failed.';
             setError(errMsg);
             setIsLoading(false);
@@ -101,6 +108,17 @@ export function useAnalysis() {
           // If status is 'pending' or 'processing', let stepIntervalRef advance step.
         } catch (pollErr: any) {
           console.error('Error polling status:', pollErr);
+          consecutiveFailures += 1;
+          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+            const errMsg = 'Lost connection to the server while checking analysis status.';
+            setError(errMsg);
+            setIsLoading(false);
+            addToast('error', 'Analysis failed', errMsg);
+          }
         }
       }, 3000);
 
