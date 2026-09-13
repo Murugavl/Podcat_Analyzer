@@ -72,28 +72,49 @@ refuses to start without it.
 
 ### Backend — Render
 
-1. Push this repo to GitHub/GitLab and create a new Blueprint on Render
-   pointing at it — it picks up [`render.yaml`](render.yaml) automatically
-   (a Docker web service built from `backend/Dockerfile`, using the repo
-   root as the build context).
-2. Pick at least the **Standard** plan (2 GB RAM). Whisper + BART-large-CNN
-   + two translation models + a sentiment/emotion pipeline are all loaded
-   into memory at startup — the 512 MB free/starter tier will get OOM-killed
-   or fail the health check.
-3. The blueprint provisions a persistent disk mounted at `/root/.cache` so
-   model weights (several GB, pulled from Hugging Face on first boot) are
-   cached across deploys instead of re-downloaded every time.
-4. Set the `ALLOWED_ORIGINS` env var (marked `sync: false` in the blueprint,
-   so Render will prompt for it) to your Vercel URL, e.g.
-   `https://echoscribe.vercel.app`. `COOKIE_SAMESITE=none` and
-   `COOKIE_SECURE=true` are already set — required because the frontend and
-   backend live on different domains, so the session cookie only makes it
-   back to the browser as a cross-site cookie.
-5. First boot downloads all the model weights — expect several minutes
-   before `/health` goes green. Render's free/starter tiers also spin down
-   idle services, so the *first* request after any idle period will be
-   slow again while everything reloads into memory.
-6. Note your service URL (e.g. `https://echoscribe-backend.onrender.com`).
+You can create the service either from [`render.yaml`](render.yaml) (**New →
+Blueprint**, config applied automatically) or manually (**New → Web
+Service**). Either way, these settings matter:
+
+| Setting | Value |
+|---|---|
+| Runtime | Docker |
+| Dockerfile Path | `backend/Dockerfile` |
+| Docker Build Context Directory | `.` (repo root) |
+| Health Check Path | `/health` |
+
+Environment variables — see [`render.yaml`](render.yaml) for the full list
+(`WHISPER_MODEL_SIZE`, `MAX_UPLOAD_SIZE_MB`, `ALLOWED_ORIGINS`,
+`COOKIE_SAMESITE=none`, `COOKIE_SECURE=true`). `COOKIE_SAMESITE`/`COOKIE_SECURE`
+are required as-is because the frontend and backend live on different
+domains, so the session cookie only survives as a cross-site cookie.
+
+**On the Free plan (512MB RAM), read this first.** This app runs Whisper +
+a summarizer + two translation models + sentiment/emotion pipelines —
+several GB combined if all were resident at once, which will not fit in
+512MB. To make Free plausible, the code:
+- loads each model lazily on first use instead of preloading everything at
+  startup (`backend/main.py`), so idle memory stays low and the health
+  check doesn't wait on a multi-GB download;
+- releases each model from memory immediately after its processing step
+  (`backend/worker.py` + `backend/ml/model_cache.py`), so at most one
+  model is resident at a time — at the cost of reloading it from local
+  disk cache on the *next* job;
+- uses `sshleifer/distilbart-cnn-12-6` (~300MB) instead of
+  `facebook/bart-large-cnn` (~1.6GB) for summarization.
+
+Even so, this is a tight fit and **not guaranteed** — PyTorch's own
+baseline overhead plus a single model's weights and activation memory can
+still flirt with 512MB, and Free has no persistent disk, so every restart
+or idle spin-down re-downloads all model weights from Hugging Face (several
+minutes before `/health` goes green again). Set `WHISPER_MODEL_SIZE=tiny`
+(smaller than the default `base`) to shave off a bit more. If it still
+OOMs, the honest fix is upgrading the instance type — no code changes
+needed, everything above still works and gets faster (less
+loading/releasing churn) with more RAM.
+
+Once deployed, note your service URL (e.g.
+`https://echoscribe-backend.onrender.com`).
 
 ### Frontend — Vercel
 
@@ -114,8 +135,11 @@ refuses to start without it.
   Render restart, redeploy, or the free-tier idle spin-down clears
   everyone's history. Don't run more than one backend instance/replica —
   a second instance would maintain its own, inconsistent history.
-- **Cold starts**: on paid-but-modest Render plans, the first request after
-  a deploy or wake-from-idle can take a long time while models load.
+- **Cold starts**: every job now reloads whatever model it needs (see the
+  Free-plan note above), and Free additionally spins the whole service down
+  after 15 minutes idle — so both "first request after a while" and, to a
+  lesser extent, every individual analysis step will be slower than a
+  beefier always-warm plan.
 
 ## Credits
 

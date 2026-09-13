@@ -12,7 +12,8 @@ from backend.ml.model_cache import (
     get_summarizer,
     get_sentiment_analyzer,
     get_emotion_analyzer,
-    get_translator_back
+    get_translator_back,
+    release,
 )
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,11 @@ class PodcastWorker:
         try:
             session_store.update_job_status(session_id, job_id, "processing")
 
-            # Run CPU-bound tasks in ThreadPoolExecutor
+            # Run CPU-bound tasks in ThreadPoolExecutor. Each model is
+            # released right after its step (see model_cache.release) so
+            # only one is resident in memory at a time — needed to fit a
+            # 512MB instance, at the cost of reloading from local disk
+            # cache on every job instead of reusing an in-memory instance.
             loop = asyncio.get_event_loop()
             with ThreadPoolExecutor() as pool:
                 # 1. Transcribe audio
@@ -54,6 +59,7 @@ class PodcastWorker:
                     whisper_model,
                     audio_path
                 )
+                release(get_whisper_model)
 
                 if not transcript.strip():
                     raise ValueError("Transcript is empty.")
@@ -68,6 +74,7 @@ class PodcastWorker:
                         translator_to_en,
                         transcript
                     )
+                    release(get_translator_to_en)
 
                 # 3. Summarize text
                 summarizer_model = get_summarizer()
@@ -77,6 +84,7 @@ class PodcastWorker:
                     summarizer_model,
                     translated_transcript
                 )
+                release(get_summarizer)
 
                 # 4. Translate summary back if lang != "en".
                 # This is an optional convenience: an opus-mt-en-<lang> model
@@ -100,6 +108,8 @@ class PodcastWorker:
                             exc_info=True
                         )
                         summary_original = summary_en
+                    finally:
+                        release(get_translator_back)
 
                 # 5. Analyze sentiment
                 sentiment_analyzer = get_sentiment_analyzer()
@@ -109,6 +119,7 @@ class PodcastWorker:
                     sentiment_analyzer,
                     translated_transcript
                 )
+                release(get_sentiment_analyzer)
 
                 # 6. Analyze emotions
                 emotion_analyzer = get_emotion_analyzer()
@@ -118,6 +129,7 @@ class PodcastWorker:
                     emotion_analyzer,
                     translated_transcript
                 )
+                release(get_emotion_analyzer)
 
             result_data = {
                 "detected_language": detected_lang,

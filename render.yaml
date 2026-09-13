@@ -4,11 +4,13 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: .
-    plan: standard
+    plan: free
     healthCheckPath: /health
     envVars:
+      # "tiny" instead of "base" to keep Whisper's own footprint down on a
+      # 512MB free instance. Bump to "base"/"small" once on a paid plan.
       - key: WHISPER_MODEL_SIZE
-        value: base
+        value: tiny
       - key: MAX_UPLOAD_SIZE_MB
         value: "100"
       - key: LOG_FILE
@@ -21,7 +23,7 @@ services:
         value: none
       - key: COOKIE_SECURE
         value: "true"
-    disk:
-      name: model-cache
-      mountPath: /root/.cache
-      sizeGB: 10
+    # Free plan doesn't support persistent disks, so model weights
+    # re-download from Hugging Face whenever the instance restarts or
+    # spins down from idle. Add a `disk:` block back (see git history)
+    # once you move to a paid plan.

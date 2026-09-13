@@ -5,13 +5,6 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.config import settings
-from backend.ml.model_cache import (
-    get_whisper_model,
-    get_translator_to_en,
-    get_summarizer,
-    get_sentiment_analyzer,
-    get_emotion_analyzer
-)
 from backend.routers.analyze import router as analyze_router
 from backend.worker import podcast_worker
 
@@ -38,17 +31,11 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
-    # Pre-load all models on startup so first request is fast
-    try:
-        get_whisper_model()
-        get_translator_to_en()
-        get_summarizer()
-        get_sentiment_analyzer()
-        get_emotion_analyzer()
-    except Exception as e:
-        logger.error(f"Error preloading models during startup: {e}")
-
-    # Start background worker task
+    # Models are loaded lazily on first use (backend/ml/model_cache.py),
+    # not preloaded here — on a memory-constrained instance, loading
+    # everything upfront both wastes idle RAM and risks the platform's
+    # health check timing out during a multi-GB download. The tradeoff is
+    # a slower first request while its models load.
     asyncio.create_task(podcast_worker.start())
 
 @app.on_event("shutdown")
