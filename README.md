@@ -79,9 +79,12 @@ Service**). Either way, these settings matter:
 | Setting | Value |
 |---|---|
 | Runtime | Docker |
-| Dockerfile Path | `backend/Dockerfile` |
-| Docker Build Context Directory | `.` (repo root) |
+| Dockerfile Path | `Dockerfile` (repo root — Render's default, nothing to change) |
+| Docker Build Context Directory | `.` (repo root — Render's default) |
 | Health Check Path | `/health` |
+
+The Dockerfile lives at the repo root specifically so these can stay at
+Render's defaults — no custom path to get wrong.
 
 Environment variables — see [`render.yaml`](render.yaml) for the full list
 (`WHISPER_MODEL_SIZE`, `MAX_UPLOAD_SIZE_MB`, `ALLOWED_ORIGINS`,

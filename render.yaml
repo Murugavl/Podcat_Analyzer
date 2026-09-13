@@ -2,7 +2,7 @@ services:
   - type: web
     name: echoscribe-backend
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
+    dockerfilePath: ./Dockerfile
     dockerContext: .
     plan: free
     healthCheckPath: /health

@@ -1,5 +1,6 @@
-# Build context must be the repo root (not backend/) so this Dockerfile
-# works unmodified on Render, and locally via `docker compose build`.
+# Lives at the repo root (not backend/) so Render's default Dockerfile
+# path/context ("Dockerfile" at repo root) works without any custom
+# per-service path configuration. Build context is the repo root.
 FROM python:3.10-slim
 RUN apt-get update && apt-get install -y ffmpeg espeak libespeak1 curl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
