@@ -104,18 +104,17 @@ def summarize_text(summarizer, text, max_chunk_chars=1000):
 
 def analyze_sentiment(sentiment_analyzer, text):
     try:
-        chunks = chunk_text(text, max_chars=512, overlap=50)
-        scores = []
-        labels = []
-        for chunk in chunks:
-            result = sentiment_analyzer(chunk)[0]
-            # Map sentiment to a numeric value for averaging if possible, 
-            # or just aggregate labels. 
-            # Requirements say "Run sentiment on all chunks and aggregate the scores"
-            # Standard sentiment-analysis returns 'POSITIVE'/'NEGATIVE' and a score.
-            labels.append(result['label'])
-            scores.append(result['score'])
-        
+        # No overlap here (unlike translation/summarization): overlap only
+        # helps continuity for generative tasks, and classifying the same
+        # text twice just wastes CPU time on a slow instance.
+        chunks = chunk_text(text, max_chars=512, overlap=0)
+        # One batched pipeline call instead of one call per chunk — far
+        # fewer Python/tokenizer round trips, which matters a lot on a
+        # CPU-constrained (e.g. Render free tier) instance.
+        results = sentiment_analyzer(chunks) if chunks else []
+        labels = [r['label'] for r in results]
+        scores = [r['score'] for r in results]
+
         # Simple aggregation: Most frequent label and average score for that label?
         # Or just average everything if they are same label.
         from collections import Counter
@@ -133,12 +132,16 @@ def analyze_sentiment(sentiment_analyzer, text):
 
 def analyze_emotions(emotion_analyzer, text):
     try:
-        chunks = chunk_text(text, max_chars=512, overlap=50)
+        # Same reasoning as analyze_sentiment: no overlap, one batched call
+        # instead of a per-chunk loop — this was the main reason a full
+        # episode's emotion pass could take 20+ minutes on a slow CPU.
+        chunks = chunk_text(text, max_chars=512, overlap=0)
         rows = []
-        for i, chunk in enumerate(chunks):
-            scores = emotion_analyzer(chunk)[0]
-            for s in scores:
-                rows.append({"Chunk": f"Chunk {i+1}", "Emotion": s['label'], "Score": s['score']})
+        if chunks:
+            all_scores = emotion_analyzer(chunks)
+            for i, scores in enumerate(all_scores):
+                for s in scores:
+                    rows.append({"Chunk": f"Chunk {i+1}", "Emotion": s['label'], "Score": s['score']})
         return rows
     except Exception:
         logging.exception("Error during emotion analysis")
