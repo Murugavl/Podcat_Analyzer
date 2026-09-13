@@ -30,6 +30,7 @@ def get_session_id(
             value=session_id,
             max_age=SESSION_COOKIE_MAX_AGE,
             httponly=True,
-            samesite="lax",
+            samesite=settings.COOKIE_SAMESITE,
+            secure=settings.COOKIE_SECURE,
         )
     return session_id
