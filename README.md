@@ -92,29 +92,18 @@ Environment variables — see [`render.yaml`](render.yaml) for the full list
 are required as-is because the frontend and backend live on different
 domains, so the session cookie only survives as a cross-site cookie.
 
-**On the Free plan (512MB RAM), read this first.** This app runs Whisper +
-a summarizer + two translation models + sentiment/emotion pipelines —
-several GB combined if all were resident at once, which will not fit in
-512MB. To make Free plausible, the code:
-- loads each model lazily on first use instead of preloading everything at
-  startup (`backend/main.py`), so idle memory stays low and the health
-  check doesn't wait on a multi-GB download;
-- releases each model from memory immediately after its processing step
-  (`backend/worker.py` + `backend/ml/model_cache.py`), so at most one
-  model is resident at a time — at the cost of reloading it from local
-  disk cache on the *next* job;
-- uses `sshleifer/distilbart-cnn-12-6` (~300MB) instead of
-  `facebook/bart-large-cnn` (~1.6GB) for summarization.
+**Plan sizing.** This app loads Whisper, a summarizer, two translation
+models, and sentiment/emotion pipelines into memory at startup — comfortably
+under 2GB combined, but well past what Render's free/starter 512MB tier can
+hold (confirmed in practice: it OOM-crashes mid-job on that tier even after
+aggressive lazy-loading and per-step memory tricks). Use at least the
+**Standard** plan (2GB RAM). The blueprint also provisions a persistent disk
+mounted at `/root/.cache` so model weights (several GB, pulled from Hugging
+Face on first boot) are cached across deploys instead of re-downloaded every
+time — Free/Starter don't support persistent disks at all.
 
-Even so, this is a tight fit and **not guaranteed** — PyTorch's own
-baseline overhead plus a single model's weights and activation memory can
-still flirt with 512MB, and Free has no persistent disk, so every restart
-or idle spin-down re-downloads all model weights from Hugging Face (several
-minutes before `/health` goes green again). Set `WHISPER_MODEL_SIZE=tiny`
-(smaller than the default `base`) to shave off a bit more. If it still
-OOMs, the honest fix is upgrading the instance type — no code changes
-needed, everything above still works and gets faster (less
-loading/releasing churn) with more RAM.
+First boot downloads all the model weights — expect several minutes before
+`/health` goes green.
 
 Once deployed, note your service URL (e.g.
 `https://echoscribe-backend.onrender.com`).
@@ -135,14 +124,12 @@ Once deployed, note your service URL (e.g.
 ### Known tradeoffs to expect in production
 
 - **No database**: job history lives in memory per backend process. A
-  Render restart, redeploy, or the free-tier idle spin-down clears
-  everyone's history. Don't run more than one backend instance/replica —
-  a second instance would maintain its own, inconsistent history.
-- **Cold starts**: every job now reloads whatever model it needs (see the
-  Free-plan note above), and Free additionally spins the whole service down
-  after 15 minutes idle — so both "first request after a while" and, to a
-  lesser extent, every individual analysis step will be slower than a
-  beefier always-warm plan.
+  Render restart or redeploy clears everyone's history. Don't run more than
+  one backend instance/replica — a second instance would maintain its own,
+  inconsistent history.
+- **Cold start on redeploy**: models are preloaded at startup for fast first
+  requests, but that preload itself takes a little while after each deploy —
+  `/health` won't go green until it finishes.
 
 ## Credits
 
